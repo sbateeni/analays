@@ -1,0 +1,102 @@
+/* تخصيص الخط */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;700&display=swap');
+
+body {
+    font-family: 'Noto Sans Arabic', sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* تخصيص البطاقات */
+.card {
+    border: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+/* تخصيص الأزرار */
+.btn-primary {
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.25rem 0.5rem rgba(13, 110, 253, 0.3);
+}
+
+/* تخصيص النموذج */
+.form-control, .form-select {
+    border: 2px solid #dee2e6;
+    padding: 0.75rem;
+    transition: border-color 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: none;
+}
+
+/* تخصيص النتيجة */
+#analysisResult {
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+/* تخصيص شريط التحميل */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* تخصيص التنقل */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.navbar-brand {
+    font-weight: 700;
+}
+
+.nav-link {
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+}
+
+/* تخصيص التذييل */
+.footer {
+    border-top: 1px solid #dee2e6;
+}
+
+/* تخصيص التنبيهات */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+/* تخصيص الأيقونات */
+.bi {
+    vertical-align: -0.125em;
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-primary {
+        width: 100%;
+    }
+    
+    #analysisResult {
+        font-size: 1rem;
+    }
+} 
