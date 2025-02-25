@@ -14,13 +14,19 @@ models = {}
 
 # تهيئة نموذج Google Gemini إذا كان المفتاح متوفراً
 gemini_api_key = os.getenv('GOOGLE_API_KEY')
-if gemini_api_key:
+if not gemini_api_key:
+    print("Warning: GOOGLE_API_KEY not found in environment variables")
+else:
     try:
         genai.configure(api_key=gemini_api_key)
         models['gemini'] = genai.GenerativeModel('gemini-pro')
         print("Gemini model initialized successfully")
     except Exception as e:
-        print(f"Error initializing Gemini model: {e}")
+        print(f"Error initializing Gemini model: {str(e)}")
+        if "invalid api key" in str(e).lower():
+            print("The provided Google API key appears to be invalid")
+        elif "quota exceeded" in str(e).lower():
+            print("API quota has been exceeded")
 
 analysis_bp = Blueprint('analysis', __name__, url_prefix='/api')
 
@@ -202,10 +208,23 @@ async def analyze_stage(stage, text, previous_results):
     prompt, model_type = get_analysis_prompt(stage, text, previous_results)
     
     try:
+        # التأكد من توفر النموذج المطلوب
+        if model_type not in models:
+            raise Exception(f"النموذج {model_type} غير متوفر. يرجى التحقق من تكوين API")
+            
         # تحليل أولي
         if model_type == 'gemini':
-            response = models['gemini'].generate_content(prompt)
-            result = response.text
+            try:
+                response = models['gemini'].generate_content(prompt)
+                result = response.text
+            except Exception as e:
+                error_msg = str(e)
+                if "invalid api key" in error_msg.lower():
+                    raise Exception("مفتاح API غير صالح. يرجى التحقق من تكوين GOOGLE_API_KEY")
+                elif "quota exceeded" in error_msg.lower():
+                    raise Exception("تم تجاوز حصة API. يرجى المحاولة لاحقاً")
+                else:
+                    raise Exception(f"خطأ في استخدام نموذج Gemini: {error_msg}")
         else:  # gemini
             completion = models['gemini'].chat.completions.create(
                 messages=[{
