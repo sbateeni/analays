@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}التحليل القانوني{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">التحليل القانوني</h1>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="case-text" class="mb-2">نص القضية</label>
+                        <textarea id="case-text" class="form-control mb-3" rows="10" 
+                                placeholder="أدخل نص القضية هنا..."></textarea>
+                    </div>
+                    
+                    <button id="analyze-button" class="btn btn-primary">
+                        تحليل القضية
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div id="analysis-result"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- تضمين ملف التحليل -->
+<script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+{% endblock %} 

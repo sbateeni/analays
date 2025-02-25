@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}إعدادات النظام{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- إعدادات عامة -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">الإعدادات العامة</h5>
+            </div>
+            <div class="card-body">
+                <form id="generalSettingsForm">
+                    <div class="mb-3">
+                        <label class="form-label">اسم النظام</label>
+                        <input type="text" class="form-control" name="system_name" 
+                               value="{{ settings.system_name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">وصف النظام</label>
+                        <textarea class="form-control" name="system_description" 
+                                  rows="3">{{ settings.system_description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">لغة الواجهة</label>
+                        <select class="form-select" name="interface_language">
+                            {% for lang in interface_languages %}
+                            <option value="{{ lang.code }}" 
+                                    {% if lang.code == settings.interface_language %}selected{% endif %}>
+                                {{ lang.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">المنطقة الزمنية</label>
+                        <select class="form-select" name="timezone">
+                            {% for tz in timezones %}
+                            <option value="{{ tz.code }}" 
+                                    {% if tz.code == settings.timezone %}selected{% endif %}>
+                                {{ tz.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- إعدادات التحليل -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">إعدادات التحليل</h5>
+            </div>
+            <div class="card-body">
+                <form id="analysisSettingsForm">
+                    <div class="mb-3">
+                        <label class="form-label">نموذج التحليل الافتراضي</label>
+                        <select class="form-select" name="default_model">
+                            {% for model in analysis_models %}
+                            <option value="{{ model.code }}" 
+                                    {% if model.code == settings.default_model %}selected{% endif %}>
+                                {{ model.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">عدد المراحل المتوازية</label>
+                        <input type="number" class="form-control" name="parallel_stages" 
+                               value="{{ settings.parallel_stages }}" min="1" max="12">
+                        <small class="text-muted">عدد المراحل التي يمكن تنفيذها بشكل متوازي</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">حد أقصى لحجم النص</label>
+                        <input type="number" class="form-control" name="max_text_size" 
+                               value="{{ settings.max_text_size }}" min="1000">
+                        <small class="text-muted">الحد الأقصى لحجم النص بالحروف</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">تفعيل التحقق من المصادر</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="enable_verification"
+                                   {% if settings.enable_verification %}checked{% endif %}>
+                            <label class="form-check-label">تفعيل</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- إعدادات التخزين المؤقت -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">إعدادات التخزين المؤقت</h5>
+            </div>
+            <div class="card-body">
+                <form id="cacheSettingsForm">
+                    <div class="mb-3">
+                        <label class="form-label">تفعيل التخزين المؤقت</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="enable_cache"
+                                   {% if settings.enable_cache %}checked{% endif %}>
+                            <label class="form-check-label">تفعيل</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">مدة صلاحية التخزين المؤقت (بالدقائق)</label>
+                        <input type="number" class="form-control" name="cache_ttl" 
+                               value="{{ settings.cache_ttl }}" min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">حد أقصى لحجم التخزين المؤقت (ميجابايت)</label>
+                        <input type="number" class="form-control" name="max_cache_size" 
+                               value="{{ settings.max_cache_size }}" min="100">
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                    <button type="button" class="btn btn-warning" onclick="clearCache()">
+                        مسح التخزين المؤقت
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- إعدادات الأمان -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">إعدادات الأمان</h5>
+            </div>
+            <div class="card-body">
+                <form id="securitySettingsForm">
+                    <div class="mb-3">
+                        <label class="form-label">تفعيل التشفير</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="enable_encryption"
+                                   {% if settings.enable_encryption %}checked{% endif %}>
+                            <label class="form-check-label">تفعيل</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">مدة صلاحية الجلسة (بالدقائق)</label>
+                        <input type="number" class="form-control" name="session_timeout" 
+                               value="{{ settings.session_timeout }}" min="5">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">تفعيل سجل الأحداث</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="enable_audit_log"
+                                   {% if settings.enable_audit_log %}checked{% endif %}>
+                            <label class="form-check-label">تفعيل</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// حفظ الإعدادات العامة
+document.getElementById('generalSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveSettings('general', this);
+});
+
+// حفظ إعدادات التحليل
+document.getElementById('analysisSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveSettings('analysis', this);
+});
+
+// حفظ إعدادات التخزين المؤقت
+document.getElementById('cacheSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveSettings('cache', this);
+});
+
+// حفظ إعدادات الأمان
+document.getElementById('securitySettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveSettings('security', this);
+});
+
+// دالة حفظ الإعدادات
+function saveSettings(type, form) {
+    const formData = new FormData(form);
+    const settings = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (form.elements[key].type === 'checkbox') {
+            settings[key] = value === 'on';
+        } else {
+            settings[key] = value;
+        }
+    }
+    
+    fetch(`/settings/${type}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم حفظ الإعدادات بنجاح');
+        } else {
+            alert('حدث خطأ أثناء حفظ الإعدادات');
+        }
+    });
+}
+
+// مسح التخزين المؤقت
+function clearCache() {
+    if (confirm('هل أنت متأكد من مسح التخزين المؤقت؟')) {
+        fetch('/settings/cache/clear', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم مسح التخزين المؤقت بنجاح');
+            } else {
+                alert('حدث خطأ أثناء مسح التخزين المؤقت');
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}التحليلات السابقة{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">التحليلات السابقة</h4>
+                <div>
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#filterModal">
+                        <i class="bi bi-funnel me-2"></i>
+                        تصفية
+                    </button>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-light">
+                        <i class="bi bi-plus-lg me-2"></i>
+                        تحليل جديد
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- شريط البحث -->
+                <div class="row mb-4">
+                    <div class="col">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="searchInput" placeholder="ابحث في التحليلات...">
+                            <button class="btn btn-outline-primary" type="button">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قائمة التحليلات -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>رقم القضية</th>
+                                <th>العنوان</th>
+                                <th>النوع</th>
+                                <th>تاريخ التحليل</th>
+                                <th>عدد المراحل</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for case in cases %}
+                            <tr>
+                                <td>{{ case.case_number }}</td>
+                                <td>{{ case.title }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ case.case_type }}</span>
+                                </td>
+                                <td>{{ case.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ case.analyses|length }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('main.view_case', case_id=case.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-success" 
+                                                onclick="exportAnalysis({{ case.id }})">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                onclick="deleteCase({{ case.id }})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ترقيم الصفحات -->
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1">السابق</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">التالي</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة التصفية -->
+<div class="modal fade" id="filterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تصفية التحليلات</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label class="form-label">نوع القضية</label>
+                        <select class="form-select" name="case_type">
+                            <option value="">الكل</option>
+                            <option value="مدني">مدني</option>
+                            <option value="جنائي">جنائي</option>
+                            <option value="تجاري">تجاري</option>
+                            <option value="إداري">إداري</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الفترة الزمنية</label>
+                        <select class="form-select" name="time_period">
+                            <option value="">الكل</option>
+                            <option value="today">اليوم</option>
+                            <option value="week">هذا الأسبوع</option>
+                            <option value="month">هذا الشهر</option>
+                            <option value="year">هذا العام</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">عدد المراحل</label>
+                        <select class="form-select" name="stages">
+                            <option value="">الكل</option>
+                            <option value="1-3">1-3 مراحل</option>
+                            <option value="4-6">4-6 مراحل</option>
+                            <option value="7-9">7-9 مراحل</option>
+                            <option value="10-12">10-12 مرحلة</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="applyFilters()">تطبيق</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function exportAnalysis(caseId) {
+    // عرض قائمة بخيارات التصدير
+    const format = prompt('اختر صيغة التصدير (pdf, word, excel):', 'pdf');
+    if (format) {
+        window.location.href = `/api/export/${caseId}?format=${format}`;
+    }
+}
+
+function deleteCase(caseId) {
+    if (confirm('هل أنت متأكد من حذف هذا التحليل؟')) {
+        fetch(`/api/cases/${caseId}`, {
+            method: 'DELETE'
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('حدث خطأ أثناء الحذف');
+            }
+        });
+    }
+}
+
+function applyFilters() {
+    const formData = new FormData(document.getElementById('filterForm'));
+    const params = new URLSearchParams(formData);
+    window.location.href = `?${params.toString()}`;
+}
+
+// البحث المباشر
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchText = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchText) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %} 

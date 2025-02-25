@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}تفاصيل القضية{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">{{ case.title }}</h4>
+                <div>
+                    <button class="btn btn-light" onclick="exportAnalysis({{ case.id }})">
+                        <i class="bi bi-download me-2"></i>
+                        تصدير
+                    </button>
+                    <button class="btn btn-light" onclick="printAnalysis()">
+                        <i class="bi bi-printer me-2"></i>
+                        طباعة
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- معلومات القضية -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-primary">معلومات القضية</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>رقم القضية:</th>
+                                <td>{{ case.case_number }}</td>
+                            </tr>
+                            <tr>
+                                <th>النوع:</th>
+                                <td><span class="badge bg-info">{{ case.case_type }}</span></td>
+                            </tr>
+                            <tr>
+                                <th>تاريخ التحليل:</th>
+                                <td>{{ case.created_at.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-primary">إحصائيات التحليل</h5>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6>عدد المراحل</h6>
+                                        <h3>{{ case.analyses|length }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6>متوسط الثقة</h6>
+                                        <h3>{{ "%.2f"|format(confidence_avg) }}%</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6>وقت التحليل</h6>
+                                        <h3>{{ "%.2f"|format(total_time) }}s</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6>المراحل المتحقق منها</h6>
+                                        <h3>{{ verified_stages }}/{{ case.analyses|length }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- نتائج التحليل -->
+                <h5 class="text-primary mb-3">نتائج التحليل</h5>
+                <div class="accordion" id="analysisResults">
+                    {% for analysis in case.analyses %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button {{ 'collapsed' if not loop.first }}" 
+                                    type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#stage{{ analysis.stage }}">
+                                المرحلة {{ analysis.stage }}: {{ stage_names[analysis.stage] }}
+                                <span class="badge bg-info ms-2">{{ model_names[analysis.model_used] }}</span>
+                                {% if analysis.verification_status == 'verified' %}
+                                <span class="badge bg-success ms-2">تم التحقق</span>
+                                {% endif %}
+                            </button>
+                        </h2>
+                        <div id="stage{{ analysis.stage }}" 
+                             class="accordion-collapse collapse {{ 'show' if loop.first }}"
+                             data-bs-parent="#analysisResults">
+                            <div class="accordion-body">
+                                {% if analysis.content is mapping %}
+                                    <!-- التحليل المتحقق منه -->
+                                    <div class="analysis-section">
+                                        <h6 class="text-primary">التحليل الأولي:</h6>
+                                        <div class="mb-3">{{ analysis.content.analysis|replace('\n', '<br>')|safe }}</div>
+                                    </div>
+                                    {% if analysis.content.verification %}
+                                    <div class="verification-section">
+                                        <h6 class="text-success">نتائج التحقق:</h6>
+                                        <div class="mb-3">{{ analysis.content.verification|replace('\n', '<br>')|safe }}</div>
+                                    </div>
+                                    {% endif %}
+                                    {% if analysis.content.sources %}
+                                    <div class="sources-section">
+                                        <h6 class="text-info">المصادر والمراجع:</h6>
+                                        <div class="mb-3">{{ analysis.content.sources|replace('\n', '<br>')|safe }}</div>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <!-- التحليل العادي -->
+                                    {{ analysis.content|replace('\n', '<br>')|safe }}
+                                {% endif %}
+
+                                <!-- معلومات إضافية -->
+                                <div class="mt-3 pt-3 border-top">
+                                    <small class="text-muted">
+                                        تم التحليل في {{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                        {% if analysis.execution_time %}
+                                        • استغرق {{ "%.2f"|format(analysis.execution_time) }} ثانية
+                                        {% endif %}
+                                        {% if analysis.confidence_score %}
+                                        • درجة الثقة: {{ "%.2f"|format(analysis.confidence_score) }}%
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- التعليقات -->
+                <div class="mt-4">
+                    <h5 class="text-primary mb-3">التعليقات</h5>
+                    {% if case.comments %}
+                        {% for comment in case.comments %}
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <p class="mb-1">{{ comment.content }}</p>
+                                <small class="text-muted">
+                                    {{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">لا توجد تعليقات</p>
+                    {% endif %}
+
+                    <!-- نموذج إضافة تعليق -->
+                    <form class="mt-3" id="commentForm">
+                        <div class="input-group">
+                            <input type="text" class="form-control" 
+                                   placeholder="أضف تعليقاً..." 
+                                   id="commentInput">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// تصدير التحليل
+function exportAnalysis(caseId) {
+    const format = prompt('اختر صيغة التصدير (pdf, word, excel):', 'pdf');
+    if (format) {
+        window.location.href = `/api/export/${caseId}?format=${format}`;
+    }
+}
+
+// طباعة التحليل
+function printAnalysis() {
+    window.print();
+}
+
+// إضافة تعليق
+document.getElementById('commentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const content = document.getElementById('commentInput').value;
+    if (content) {
+        fetch('/api/comments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                case_id: {{ case.id }},
+                content: content
+            })
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('حدث خطأ أثناء إضافة التعليق');
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

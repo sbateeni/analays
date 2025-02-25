@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">المحتويات</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% if page_type == 'privacy' %}
+                <a href="#data-collection" class="list-group-item list-group-item-action">جمع البيانات</a>
+                <a href="#data-usage" class="list-group-item list-group-item-action">استخدام البيانات</a>
+                <a href="#data-sharing" class="list-group-item list-group-item-action">مشاركة البيانات</a>
+                <a href="#data-security" class="list-group-item list-group-item-action">أمن البيانات</a>
+                <a href="#user-rights" class="list-group-item list-group-item-action">حقوق المستخدم</a>
+                <a href="#cookies" class="list-group-item list-group-item-action">ملفات تعريف الارتباط</a>
+                <a href="#updates" class="list-group-item list-group-item-action">تحديثات السياسة</a>
+                <a href="#contact" class="list-group-item list-group-item-action">الاتصال بنا</a>
+                {% else %}
+                <a href="#acceptance" class="list-group-item list-group-item-action">قبول الشروط</a>
+                <a href="#services" class="list-group-item list-group-item-action">الخدمات المقدمة</a>
+                <a href="#user-obligations" class="list-group-item list-group-item-action">التزامات المستخدم</a>
+                <a href="#intellectual-property" class="list-group-item list-group-item-action">الملكية الفكرية</a>
+                <a href="#liability" class="list-group-item list-group-item-action">المسؤولية القانونية</a>
+                <a href="#termination" class="list-group-item list-group-item-action">إنهاء الخدمة</a>
+                <a href="#governing-law" class="list-group-item list-group-item-action">القانون الحاكم</a>
+                <a href="#changes" class="list-group-item list-group-item-action">التغييرات في الشروط</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">{{ page_title }}</h5>
+            </div>
+            <div class="card-body">
+                {% if page_type == 'privacy' %}
+                <section id="data-collection" class="mb-5">
+                    <h4>جمع البيانات</h4>
+                    <p>نقوم بجمع المعلومات التالية:</p>
+                    <ul>
+                        <li>النصوص القانونية المدخلة للتحليل</li>
+                        <li>نتائج التحليل والتقييمات</li>
+                        <li>المصطلحات القانونية المضافة</li>
+                        <li>إحصائيات استخدام النظام</li>
+                        <li>معلومات الجلسة والإعدادات</li>
+                    </ul>
+                </section>
+
+                <section id="data-usage" class="mb-5">
+                    <h4>استخدام البيانات</h4>
+                    <p>نستخدم البيانات المجمعة لـ:</p>
+                    <ul>
+                        <li>تقديم خدمات التحليل القانوني</li>
+                        <li>تحسين دقة التحليل وأداء النظام</li>
+                        <li>تخصيص تجربة المستخدم</li>
+                        <li>إنشاء إحصائيات وتقارير مجمعة</li>
+                    </ul>
+                </section>
+
+                <section id="data-sharing" class="mb-5">
+                    <h4>مشاركة البيانات</h4>
+                    <p>نحن نحافظ على سرية بياناتك ولا نشاركها مع أي طرف ثالث إلا في الحالات التالية:</p>
+                    <ul>
+                        <li>بموافقتك الصريحة</li>
+                        <li>لتلبية متطلبات قانونية</li>
+                        <li>لحماية حقوقنا القانونية</li>
+                    </ul>
+                </section>
+
+                <section id="data-security" class="mb-5">
+                    <h4>أمن البيانات</h4>
+                    <p>نتخذ تدابير أمنية صارمة لحماية بياناتك، تشمل:</p>
+                    <ul>
+                        <li>التشفير من طرف إلى طرف</li>
+                        <li>التخزين الآمن للبيانات</li>
+                        <li>المراقبة المستمرة للأمن</li>
+                        <li>تحديثات أمنية دورية</li>
+                    </ul>
+                </section>
+
+                <section id="user-rights" class="mb-5">
+                    <h4>حقوق المستخدم</h4>
+                    <p>لديك الحق في:</p>
+                    <ul>
+                        <li>الوصول إلى بياناتك</li>
+                        <li>تصحيح بياناتك</li>
+                        <li>حذف بياناتك</li>
+                        <li>نقل بياناتك</li>
+                        <li>الاعتراض على معالجة بياناتك</li>
+                    </ul>
+                </section>
+
+                <section id="cookies" class="mb-5">
+                    <h4>ملفات تعريف الارتباط</h4>
+                    <p>نستخدم ملفات تعريف الارتباط لـ:</p>
+                    <ul>
+                        <li>تحسين أداء النظام</li>
+                        <li>حفظ تفضيلات المستخدم</li>
+                        <li>تتبع إحصائيات الاستخدام</li>
+                    </ul>
+                </section>
+
+                <section id="updates" class="mb-5">
+                    <h4>تحديثات السياسة</h4>
+                    <p>قد نقوم بتحديث سياسة الخصوصية من وقت لآخر. سيتم إخطارك بأي تغييرات جوهرية.</p>
+                </section>
+
+                <section id="contact" class="mb-5">
+                    <h4>الاتصال بنا</h4>
+                    <p>للاستفسارات المتعلقة بالخصوصية، يمكنك التواصل معنا عبر:</p>
+                    <ul>
+                        <li>البريد الإلكتروني: privacy@legal-analysis.com</li>
+                        <li>الهاتف: +xxx-xxxx-xxxx</li>
+                    </ul>
+                </section>
+
+                {% else %}
+
+                <section id="acceptance" class="mb-5">
+                    <h4>قبول الشروط</h4>
+                    <p>باستخدام نظام التحليل القانوني، فإنك توافق على الالتزام بهذه الشروط والأحكام.</p>
+                </section>
+
+                <section id="services" class="mb-5">
+                    <h4>الخدمات المقدمة</h4>
+                    <p>نقدم الخدمات التالية:</p>
+                    <ul>
+                        <li>تحليل النصوص القانونية</li>
+                        <li>استخراج المعلومات القانونية</li>
+                        <li>ترجمة النصوص القانونية</li>
+                        <li>إنشاء التقارير والإحصائيات</li>
+                    </ul>
+                </section>
+
+                <section id="user-obligations" class="mb-5">
+                    <h4>التزامات المستخدم</h4>
+                    <p>يجب على المستخدم:</p>
+                    <ul>
+                        <li>استخدام النظام بشكل قانوني</li>
+                        <li>الحفاظ على سرية بيانات الدخول</li>
+                        <li>عدم إساءة استخدام الخدمات</li>
+                        <li>احترام حقوق الملكية الفكرية</li>
+                    </ul>
+                </section>
+
+                <section id="intellectual-property" class="mb-5">
+                    <h4>الملكية الفكرية</h4>
+                    <p>جميع حقوق الملكية الفكرية في النظام محفوظة لنا. لا يجوز:</p>
+                    <ul>
+                        <li>نسخ أو تعديل النظام</li>
+                        <li>إعادة توزيع المحتوى</li>
+                        <li>هندسة النظام عكسياً</li>
+                    </ul>
+                </section>
+
+                <section id="liability" class="mb-5">
+                    <h4>المسؤولية القانونية</h4>
+                    <p>نحن غير مسؤولين عن:</p>
+                    <ul>
+                        <li>أي أضرار غير مباشرة</li>
+                        <li>فقدان البيانات</li>
+                        <li>انقطاع الخدمة</li>
+                        <li>قرارات المستخدم القانونية</li>
+                    </ul>
+                </section>
+
+                <section id="termination" class="mb-5">
+                    <h4>إنهاء الخدمة</h4>
+                    <p>يمكننا إنهاء أو تعليق الخدمة في حالة:</p>
+                    <ul>
+                        <li>مخالفة الشروط والأحكام</li>
+                        <li>إساءة استخدام النظام</li>
+                        <li>عدم سداد الرسوم المستحقة</li>
+                    </ul>
+                </section>
+
+                <section id="governing-law" class="mb-5">
+                    <h4>القانون الحاكم</h4>
+                    <p>تخضع هذه الشروط للقوانين المحلية وتفسر وفقاً لها.</p>
+                </section>
+
+                <section id="changes" class="mb-5">
+                    <h4>التغييرات في الشروط</h4>
+                    <p>نحتفظ بالحق في تعديل هذه الشروط. سيتم إخطار المستخدمين بالتغييرات الجوهرية.</p>
+                </section>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// التمرير السلس للروابط
+document.querySelectorAll('.list-group-item-action').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
+    });
+});
+</script>
+{% endblock %} 

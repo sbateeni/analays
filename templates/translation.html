@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}الترجمة القانونية{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- إعدادات الترجمة -->
+    <div class="col-md-4">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">إعدادات الترجمة</h5>
+            </div>
+            <div class="card-body">
+                <form id="translationSettingsForm">
+                    <div class="mb-3">
+                        <label class="form-label">اللغة المصدر</label>
+                        <select class="form-select" name="source_language">
+                            {% for lang in languages %}
+                            <option value="{{ lang.code }}" {% if lang.code == settings.source_language %}selected{% endif %}>
+                                {{ lang.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اللغة الهدف</label>
+                        <select class="form-select" name="target_language">
+                            {% for lang in languages %}
+                            <option value="{{ lang.code }}" {% if lang.code == settings.target_language %}selected{% endif %}>
+                                {{ lang.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">حفظ المصطلحات القانونية</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="preserve_terms" 
+                                   {% if settings.preserve_terms %}checked{% endif %}>
+                            <label class="form-check-label">تفعيل</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">التحقق من الترجمة</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="validate_translation"
+                                   {% if settings.validate_translation %}checked{% endif %}>
+                            <label class="form-check-label">تفعيل</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- المصطلحات القانونية -->
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">المصطلحات القانونية</h5>
+                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addTermModal">
+                    <i class="bi bi-plus"></i> إضافة مصطلح
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>المصطلح</th>
+                                <th>الترجمة</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for term in legal_terms %}
+                            <tr>
+                                <td>{{ term.source }}</td>
+                                <td>{{ term.target }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteTerm('{{ term.id }}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- سجل الترجمات -->
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">سجل الترجمات</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>النص الأصلي</th>
+                                <th>الترجمة</th>
+                                <th>اللغات</th>
+                                <th>الدقة</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in translation_history %}
+                            <tr>
+                                <td>{{ entry.date|datetime }}</td>
+                                <td>
+                                    <button class="btn btn-link p-0" 
+                                            onclick="showText('{{ entry.source_text }}')">
+                                        {{ entry.source_text[:50] }}...
+                                    </button>
+                                </td>
+                                <td>
+                                    <button class="btn btn-link p-0" 
+                                            onclick="showText('{{ entry.translated_text }}')">
+                                        {{ entry.translated_text[:50] }}...
+                                    </button>
+                                </td>
+                                <td>{{ entry.source_lang }} → {{ entry.target_lang }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ entry.confidence }}%;"
+                                             aria-valuenow="{{ entry.confidence }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            {{ "%.1f"|format(entry.confidence) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="suggestAlternative('{{ entry.id }}')">
+                                        <i class="bi bi-lightbulb"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteTranslation('{{ entry.id }}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة مصطلح -->
+<div class="modal fade" id="addTermModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة مصطلح قانوني جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTermForm">
+                    <div class="mb-3">
+                        <label class="form-label">المصطلح</label>
+                        <input type="text" class="form-control" name="source_term" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الترجمة</label>
+                        <input type="text" class="form-control" name="target_term" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="addTerm()">إضافة</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal عرض النص -->
+<div class="modal fade" id="textModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">النص الكامل</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="fullText" class="p-3 bg-light"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// حفظ إعدادات الترجمة
+document.getElementById('translationSettingsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const settings = {
+        source_language: formData.get('source_language'),
+        target_language: formData.get('target_language'),
+        preserve_terms: formData.get('preserve_terms') === 'on',
+        validate_translation: formData.get('validate_translation') === 'on'
+    };
+    
+    fetch('/translation/settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم حفظ الإعدادات بنجاح');
+        } else {
+            alert('حدث خطأ أثناء حفظ الإعدادات');
+        }
+    });
+});
+
+// إضافة مصطلح قانوني
+function addTerm() {
+    const form = document.getElementById('addTermForm');
+    const formData = new FormData(form);
+    
+    fetch('/translation/terms', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            source: formData.get('source_term'),
+            target: formData.get('target_term')
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('حدث خطأ أثناء إضافة المصطلح');
+        }
+    });
+}
+
+// حذف مصطلح قانوني
+function deleteTerm(termId) {
+    if (confirm('هل أنت متأكد من حذف هذا المصطلح؟')) {
+        fetch(`/translation/terms/${termId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ أثناء حذف المصطلح');
+            }
+        });
+    }
+}
+
+// اقتراح ترجمة بديلة
+function suggestAlternative(translationId) {
+    fetch(`/translation/suggest/${translationId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`الترجمة البديلة المقترحة:\n${data.suggestion}`);
+            } else {
+                alert('حدث خطأ أثناء اقتراح الترجمة البديلة');
+            }
+        });
+}
+
+// حذف ترجمة
+function deleteTranslation(translationId) {
+    if (confirm('هل أنت متأكد من حذف هذه الترجمة؟')) {
+        fetch(`/translation/history/${translationId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ أثناء حذف الترجمة');
+            }
+        });
+    }
+}
+
+// عرض النص الكامل
+function showText(text) {
+    document.getElementById('fullText').textContent = text;
+    new bootstrap.Modal(document.getElementById('textModal')).show();
+}
+</script>
+{% endblock %} 

@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
 import google.generativeai as genai
-from groq import Groq
 import os
 from dotenv import load_dotenv
 import asyncio
@@ -23,31 +22,22 @@ if gemini_api_key:
     except Exception as e:
         print(f"Error initializing Gemini model: {e}")
 
-# تهيئة نموذج Groq Llama إذا كان المفتاح متوفراً
-groq_api_key = os.getenv('GROQ_API_KEY')
-if groq_api_key:
-    try:
-        models['llama'] = Groq(api_key=groq_api_key)
-        print("Llama model initialized successfully")
-    except Exception as e:
-        print(f"Error initializing Llama model: {e}")
-
 analysis_bp = Blueprint('analysis', __name__, url_prefix='/api')
 
-# تحديد النموذج المناسب لكل مرحلة
+# تحديد النموذج المناسب لكل مرحلة - الآن كلها تستخدم Gemini
 STAGE_MODELS = {
-    1: 'gemini',    # التحليل الأولي - يحتاج إلى بحث في الإنترنت
-    2: 'gemini',    # تحليل الوقائع والأحداث - يحتاج إلى فهم عام
-    3: 'llama',     # التحليل القانوني الأساسي - يحتاج إلى معرفة قانونية عميقة
-    4: 'llama',     # تحليل الأدلة والمستندات - يحتاج إلى تحليل متخصص
-    5: 'gemini',    # تحليل السوابق القضائية - يحتاج إلى بحث في الإنترنت
-    6: 'llama',     # تحليل الحجج القانونية - يحتاج إلى تحليل متعمق
-    7: 'llama',     # تحليل الدفوع القانونية - يحتاج إلى معرفة قانونية متخصصة
-    8: 'llama',     # التحليل الإجرائي - يحتاج إلى معرفة بالإجراءات القانونية
-    9: 'llama',     # صياغة الاستراتيجية القانونية - يحتاج إلى تفكير استراتيجي
-    10: 'gemini',   # تحليل المخاطر والفرص - يحتاج إلى معلومات حديثة
-    11: 'llama',    # اقتراح الحلول والبدائل - يحتاج إلى تحليل شامل
-    12: 'gemini'    # الملخص النهائي - يحتاج إلى دمج كل المعلومات
+    1: 'gemini',    # التحليل الأولي
+    2: 'gemini',    # تحليل الوقائع والأحداث
+    3: 'gemini',    # التحليل القانوني الأساسي
+    4: 'gemini',    # تحليل الأدلة والمستندات
+    5: 'gemini',    # تحليل السوابق القضائية
+    6: 'gemini',    # تحليل الحجج القانونية
+    7: 'gemini',    # تحليل الدفوع القانونية
+    8: 'gemini',    # التحليل الإجرائي
+    9: 'gemini',    # صياغة الاستراتيجية القانونية
+    10: 'gemini',   # تحليل المخاطر والفرص
+    11: 'gemini',   # اقتراح الحلول والبدائل
+    12: 'gemini'    # الملخص النهائي
 }
 
 def get_analysis_prompt(stage, text, previous_results=None):
@@ -115,7 +105,7 @@ def get_analysis_prompt(stage, text, previous_results=None):
     prompt = base_prompts.get(stage, "قم بتحليل القضية التالية")
     model_type = STAGE_MODELS[stage]
     
-    if model_type == "llama":
+    if model_type == "gemini":
         prompt = f"""أنت محامٍ خبير في القانون الفلسطيني ومتخصص في التحليل القانوني باللغة العربية.
 
 تعليمات هامة:
@@ -216,18 +206,17 @@ async def analyze_stage(stage, text, previous_results):
         if model_type == 'gemini':
             response = models['gemini'].generate_content(prompt)
             result = response.text
-        else:  # llama
-            completion = models['llama'].chat.completions.create(
+        else:  # gemini
+            completion = models['gemini'].chat.completions.create(
                 messages=[{
                     "role": "user",
                     "content": prompt
                 }],
-                model="llama-3.3-70b-versatile",
-                temperature=1,
-                max_tokens=1024,
-                top_p=1,
-                stream=False,
-                stop=None
+                model="deepseek-r1-distill-gemini-70b",
+                temperature=0.6,
+                max_tokens=4096,
+                top_p=0.95,
+                stream=False
             )
             result = completion.choices[0].message.content
 

@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}المساعدة{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <!-- قائمة التصنيفات -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">التصنيفات</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for category in categories %}
+                <a href="#category-{{ category|lower }}" 
+                   class="list-group-item list-group-item-action">
+                    {{ category }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- الأسئلة الشائعة -->
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">الأسئلة الشائعة</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="#faq-1" class="list-group-item list-group-item-action">
+                    كيف يعمل النظام؟
+                </a>
+                <a href="#faq-2" class="list-group-item list-group-item-action">
+                    ما هي المراحل المختلفة للتحليل؟
+                </a>
+                <a href="#faq-3" class="list-group-item list-group-item-action">
+                    كيف يتم التحقق من المعلومات؟
+                </a>
+                <a href="#faq-4" class="list-group-item list-group-item-action">
+                    كيف يمكنني تصدير النتائج؟
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <!-- شريط البحث -->
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <div class="input-group">
+                    <input type="text" class="form-control" 
+                           id="searchInput" 
+                           placeholder="ابحث في المساعدة...">
+                    <button class="btn btn-primary" type="button" onclick="searchHelp()">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- نتائج البحث -->
+        <div id="searchResults" class="d-none">
+            <h5 class="text-primary mb-3">نتائج البحث</h5>
+            <div id="resultsContainer"></div>
+        </div>
+
+        <!-- محتوى المساعدة -->
+        <div id="helpContent">
+            {% for category in categories %}
+            <div class="card shadow mb-4" id="category-{{ category|lower }}">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ category }}</h5>
+                </div>
+                <div class="card-body">
+                    {% for article in articles[category] %}
+                    <article class="mb-4">
+                        <h6>{{ article.title }}</h6>
+                        <div class="content">
+                            {{ article.content|safe }}
+                        </div>
+                        {% if article.examples %}
+                        <div class="examples mt-3">
+                            <h6 class="text-primary">أمثلة:</h6>
+                            {% for example in article.examples %}
+                            <div class="example card bg-light">
+                                <div class="card-body">
+                                    <pre><code>{{ example.code }}</code></pre>
+                                    <p class="mt-2 mb-0">{{ example.description }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- الأسئلة الشائعة -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">الأسئلة الشائعة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#faq-1">
+                                    كيف يعمل النظام؟
+                                </button>
+                            </h2>
+                            <div id="faq-1" class="accordion-collapse collapse show" 
+                                 data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    يستخدم النظام تقنيات الذكاء الاصطناعي المتقدمة لتحليل النصوص القانونية
+                                    من خلال 12 مرحلة مختلفة، كل مرحلة تركز على جانب معين من جوانب التحليل.
+                                    يتم استخدام نماذج مختلفة (Google Gemini و Groq Llama) حسب طبيعة كل مرحلة.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#faq-2">
+                                    ما هي المراحل المختلفة للتحليل؟
+                                </button>
+                            </h2>
+                            <div id="faq-2" class="accordion-collapse collapse" 
+                                 data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>التحليل الأولي</li>
+                                        <li>تحليل الوقائع والأحداث</li>
+                                        <li>التحليل القانوني الأساسي</li>
+                                        <li>تحليل الأدلة والمستندات</li>
+                                        <li>تحليل السوابق القضائية</li>
+                                        <li>تحليل الحجج القانونية</li>
+                                        <li>تحليل الدفوع القانونية</li>
+                                        <li>التحليل الإجرائي</li>
+                                        <li>صياغة الاستراتيجية القانونية</li>
+                                        <li>تحليل المخاطر والفرص</li>
+                                        <li>اقتراح الحلول والبدائل</li>
+                                        <li>الملخص النهائي</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#faq-3">
+                                    كيف يتم التحقق من المعلومات؟
+                                </button>
+                            </h2>
+                            <div id="faq-3" class="accordion-collapse collapse" 
+                                 data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    يتم التحقق من المعلومات في المراحل الرئيسية (1، 3، 5، 8) من خلال:
+                                    <ul>
+                                        <li>البحث في قواعد البيانات القانونية</li>
+                                        <li>مقارنة المعلومات مع المصادر الموثوقة</li>
+                                        <li>التحقق من التحديثات والتعديلات الحديثة</li>
+                                        <li>تأكيد صحة الإشارات للقوانين والتشريعات</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#faq-4">
+                                    كيف يمكنني تصدير النتائج؟
+                                </button>
+                            </h2>
+                            <div id="faq-4" class="accordion-collapse collapse" 
+                                 data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    يمكنك تصدير نتائج التحليل بثلاث صيغ مختلفة:
+                                    <ul>
+                                        <li>PDF: للحصول على تقرير كامل مع التنسيق</li>
+                                        <li>Word: للتحرير والتعديل</li>
+                                        <li>Excel: للبيانات والإحصائيات</li>
+                                    </ul>
+                                    يمكنك اختيار صيغة التصدير من زر "تصدير" في صفحة تفاصيل التحليل.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function searchHelp() {
+    const query = document.getElementById('searchInput').value;
+    if (query) {
+        fetch(`/help/search?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(results => {
+                const container = document.getElementById('resultsContainer');
+                container.innerHTML = '';
+                
+                if (results.length > 0) {
+                    results.forEach(result => {
+                        container.innerHTML += `
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">${result.title}</h6>
+                                    <p class="card-text">${result.excerpt}</p>
+                                    <small class="text-muted">${result.type}</small>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-muted">لم يتم العثور على نتائج</p>';
+                }
+                
+                document.getElementById('searchResults').classList.remove('d-none');
+                document.getElementById('helpContent').classList.add('d-none');
+            });
+    } else {
+        document.getElementById('searchResults').classList.add('d-none');
+        document.getElementById('helpContent').classList.remove('d-none');
+    }
+}
+
+// البحث عند الضغط على Enter
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchHelp();
+    }
+});
+
+// التمرير السلس عند النقر على روابط التصنيفات
+document.querySelectorAll('.list-group-item-action').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
+    });
+});
+</script>
+{% endblock %} 

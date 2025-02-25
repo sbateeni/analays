@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}إحصائيات الأداء{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- ملخص الإحصائيات -->
+    <div class="col-md-12 mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card shadow text-center">
+                    <div class="card-body">
+                        <h6 class="text-primary">عدد التحليلات</h6>
+                        <h2>{{ total_analyses }}</h2>
+                        <small class="text-muted">إجمالي التحليلات المنجزة</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow text-center">
+                    <div class="card-body">
+                        <h6 class="text-primary">متوسط الدقة</h6>
+                        <h2>{{ "%.2f"|format(avg_confidence) }}%</h2>
+                        <small class="text-muted">متوسط دقة التحليل</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow text-center">
+                    <div class="card-body">
+                        <h6 class="text-primary">متوسط وقت التنفيذ</h6>
+                        <h2>{{ "%.1f"|format(avg_execution_time) }}s</h2>
+                        <small class="text-muted">متوسط زمن التحليل</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow text-center">
+                    <div class="card-body">
+                        <h6 class="text-primary">نسبة النجاح</h6>
+                        <h2>{{ "%.2f"|format(success_rate) }}%</h2>
+                        <small class="text-muted">نسبة التحليلات الناجحة</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الرسوم البيانية -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">توزيع الدقة حسب المراحل</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="stageConfidenceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">متوسط وقت التنفيذ حسب المراحل</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="stageTimeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول تفصيلي للمراحل -->
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">تفاصيل أداء المراحل</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>المرحلة</th>
+                                <th>متوسط الدقة</th>
+                                <th>متوسط الوقت</th>
+                                <th>عدد التنفيذات</th>
+                                <th>نسبة النجاح</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stage in stages %}
+                            <tr>
+                                <td>{{ stage.name }}</td>
+                                <td>{{ "%.2f"|format(stage.avg_confidence) }}%</td>
+                                <td>{{ "%.1f"|format(stage.avg_time) }}s</td>
+                                <td>{{ stage.executions }}</td>
+                                <td>{{ "%.2f"|format(stage.success_rate) }}%</td>
+                                <td>
+                                    {% if stage.status == 'good' %}
+                                    <span class="badge bg-success">جيد</span>
+                                    {% elif stage.status == 'warning' %}
+                                    <span class="badge bg-warning">تحذير</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">يحتاج تحسين</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// بيانات الرسوم البيانية
+const stageNames = {{ stage_names|tojson }};
+const confidenceData = {{ confidence_data|tojson }};
+const timeData = {{ time_data|tojson }};
+
+// رسم بياني للدقة
+const confidenceCtx = document.getElementById('stageConfidenceChart').getContext('2d');
+new Chart(confidenceCtx, {
+    type: 'bar',
+    data: {
+        labels: stageNames,
+        datasets: [{
+            label: 'متوسط الدقة (%)',
+            data: confidenceData,
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+// رسم بياني للوقت
+const timeCtx = document.getElementById('stageTimeChart').getContext('2d');
+new Chart(timeCtx, {
+    type: 'line',
+    data: {
+        labels: stageNames,
+        datasets: [{
+            label: 'متوسط الوقت (ثانية)',
+            data: timeData,
+            fill: false,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %} 
