@@ -11,7 +11,7 @@
                 <div class="card shadow text-center">
                     <div class="card-body">
                         <h6 class="text-primary">عدد التحليلات</h6>
-                        <h2>{{ total_analyses }}</h2>
+                        <h2>{{ total_analyses|default(0) }}</h2>
                         <small class="text-muted">إجمالي التحليلات المنجزة</small>
                     </div>
                 </div>
@@ -20,7 +20,7 @@
                 <div class="card shadow text-center">
                     <div class="card-body">
                         <h6 class="text-primary">متوسط الدقة</h6>
-                        <h2>{{ "%.2f"|format(avg_confidence) }}%</h2>
+                        <h2>{{ "%.2f"|format(avg_confidence|default(0)) }}%</h2>
                         <small class="text-muted">متوسط دقة التحليل</small>
                     </div>
                 </div>
@@ -29,7 +29,7 @@
                 <div class="card shadow text-center">
                     <div class="card-body">
                         <h6 class="text-primary">متوسط وقت التنفيذ</h6>
-                        <h2>{{ "%.1f"|format(avg_execution_time) }}s</h2>
+                        <h2>{{ "%.1f"|format(avg_execution_time|default(0)) }}s</h2>
                         <small class="text-muted">متوسط زمن التحليل</small>
                     </div>
                 </div>
@@ -38,7 +38,7 @@
                 <div class="card shadow text-center">
                     <div class="card-body">
                         <h6 class="text-primary">نسبة النجاح</h6>
-                        <h2>{{ "%.2f"|format(success_rate) }}%</h2>
+                        <h2>{{ "%.2f"|format(success_rate|default(0)) }}%</h2>
                         <small class="text-muted">نسبة التحليلات الناجحة</small>
                     </div>
                 </div>
@@ -92,10 +92,10 @@
                             {% for stage in stages %}
                             <tr>
                                 <td>{{ stage.name }}</td>
-                                <td>{{ "%.2f"|format(stage.avg_confidence) }}%</td>
-                                <td>{{ "%.1f"|format(stage.avg_time) }}s</td>
-                                <td>{{ stage.executions }}</td>
-                                <td>{{ "%.2f"|format(stage.success_rate) }}%</td>
+                                <td>{{ "%.2f"|format(stage.avg_confidence|default(0)) }}%</td>
+                                <td>{{ "%.1f"|format(stage.avg_time|default(0)) }}s</td>
+                                <td>{{ stage.executions|default(0) }}</td>
+                                <td>{{ "%.2f"|format(stage.success_rate|default(0)) }}%</td>
                                 <td>
                                     {% if stage.status == 'good' %}
                                     <span class="badge bg-success">جيد</span>
@@ -120,9 +120,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // بيانات الرسوم البيانية
-const stageNames = {{ stage_names|tojson }};
-const confidenceData = {{ confidence_data|tojson }};
-const timeData = {{ time_data|tojson }};
+const stageNames = JSON.parse('{{ stage_names|tojson|safe }}');
+const confidenceData = JSON.parse('{{ confidence_data|tojson|safe }}');
+const timeData = JSON.parse('{{ time_data|tojson|safe }}');
 
 // رسم بياني للدقة
 const confidenceCtx = document.getElementById('stageConfidenceChart').getContext('2d');

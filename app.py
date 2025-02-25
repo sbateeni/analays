@@ -101,7 +101,7 @@ def search_help():
 @main_bp.route('/metrics')
 def metrics():
     """عرض إحصائيات الأداء"""
-    summary = performance_tracker.get_performance_summary()
+    summary = performance_tracker.get_performance_summary() or {}
     stages = []
     stage_names = []
     confidence_data = []

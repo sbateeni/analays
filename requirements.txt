@@ -14,4 +14,5 @@ pdfkit==1.0.0
 deep-translator==1.11.4
 beautifulsoup4==4.12.3
 requests==2.31.0
-gunicorn==21.2.0 
+gunicorn==21.2.0
+markdown==3.5.2 
