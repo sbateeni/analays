@@ -16,9 +16,16 @@
                                 placeholder="أدخل نص القضية هنا..."></textarea>
                     </div>
                     
-                    <button id="analyze-button" class="btn btn-primary">
-                        تحليل القضية
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button id="analyze-button" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>
+                            تحليل القضية
+                        </button>
+                        <button id="save-button" class="btn btn-success" style="display: none;" onclick="saveCase()">
+                            <i class="bi bi-save me-1"></i>
+                            حفظ القضية
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -33,6 +40,7 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- تضمين ملف التحليل -->
+<!-- تضمين ملفات JavaScript -->
 <script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+<script src="{{ url_for('static', filename='js/save_case.js') }}"></script>
 {% endblock %} 

@@ -18,15 +18,43 @@ if not gemini_api_key:
     print("Warning: GOOGLE_API_KEY not found in environment variables")
 else:
     try:
+        # تكوين Gemini
         genai.configure(api_key=gemini_api_key)
-        models['gemini'] = genai.GenerativeModel('gemini-pro')
-        print("Gemini model initialized successfully")
+        
+        # طباعة النماذج المتاحة
+        print("Available models:", genai.list_models())
+        
+        # محاولة تهيئة النموذج
+        try:
+            model = genai.GenerativeModel('gemini-pro')
+            # اختبار النموذج
+            response = model.generate_content("Test connection")
+            if response and response.text:
+                models['gemini'] = model
+                print("Gemini model initialized and tested successfully")
+            else:
+                raise Exception("Model response was empty")
+        except Exception as model_error:
+            print(f"Error testing model: {str(model_error)}")
+            raise
+            
     except Exception as e:
-        print(f"Error initializing Gemini model: {str(e)}")
-        if "invalid api key" in str(e).lower():
+        error_msg = str(e).lower()
+        print(f"Detailed error: {str(e)}")
+        
+        if "invalid api key" in error_msg:
             print("The provided Google API key appears to be invalid")
-        elif "quota exceeded" in str(e).lower():
+        elif "quota exceeded" in error_msg:
             print("API quota has been exceeded")
+        elif "not found" in error_msg:
+            print("Model not found. Please ensure you have:")
+            print("1. A valid API key")
+            print("2. Access to the Gemini API")
+            print("3. The Gemini API enabled in your Google Cloud project")
+        elif "permission denied" in error_msg:
+            print("Permission denied. Please check your API key permissions")
+        else:
+            print("Unexpected error initializing Gemini model")
 
 analysis_bp = Blueprint('analysis', __name__, url_prefix='/api')
 

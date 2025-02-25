@@ -109,27 +109,28 @@ def metrics():
     
     for stage_num, stage_name in STAGE_NAMES.items():
         metrics = performance_tracker.get_metrics(metric_name='confidence_score', stage=stage_num)
-        avg_confidence = sum(m.metric_value for m in metrics) / len(metrics) if metrics else 0
+        avg_confidence = sum(m.metric_value for m in metrics) / len(metrics) if metrics else 0.0
         
         time_metrics = performance_tracker.get_metrics(metric_name='execution_time', stage=stage_num)
-        avg_time = sum(m.metric_value for m in time_metrics) / len(time_metrics) if time_metrics else 0
+        avg_time = sum(m.metric_value for m in time_metrics) / len(time_metrics) if time_metrics else 0.0
         
         stages.append({
             'name': stage_name,
-            'avg_confidence': avg_confidence,
-            'avg_time': avg_time,
+            'avg_confidence': float(avg_confidence),
+            'avg_time': float(avg_time),
             'executions': len(metrics),
-            'success_rate': (len([m for m in metrics if m.metric_value >= 70]) / len(metrics) * 100) if metrics else 0,
+            'success_rate': float((len([m for m in metrics if m.metric_value >= 70]) / len(metrics) * 100) if metrics else 0),
             'status': 'good' if avg_confidence >= 80 else 'warning' if avg_confidence >= 60 else 'danger'
         })
         stage_names.append(stage_name)
-        confidence_data.append(avg_confidence)
-        time_data.append(avg_time)
+        confidence_data.append(float(avg_confidence))
+        time_data.append(float(avg_time))
     
+    # Ensure all numeric values have proper defaults and are converted to float
     return render_template('metrics.html',
-                         total_analyses=summary.get('total_analyses', 0),
-                         avg_confidence=summary.get('average_confidence', 0),
-                         avg_execution_time=summary.get('average_execution_time', 0),
+                         total_analyses=int(summary.get('total_analyses', 0)),
+                         avg_confidence=float(summary.get('average_confidence', 0) or 0),
+                         avg_execution_time=float(summary.get('average_execution_time', 0) or 0),
                          success_rate=float(summary.get('verification_success_rate', 0) or 0) * 100,
                          stages=stages,
                          stage_names=stage_names,
@@ -253,9 +254,11 @@ def create_app():
     
     # Register blueprints
     from routes.analysis import analysis_bp
+    from routes.case_management import case_bp
     
     app.register_blueprint(main_bp)
     app.register_blueprint(analysis_bp)
+    app.register_blueprint(case_bp)
     
     return app
 

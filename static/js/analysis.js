@@ -3,6 +3,7 @@ async function analyzeText() {
     const text = document.getElementById('case-text').value;
     const resultDiv = document.getElementById('analysis-result');
     const analysisButton = document.getElementById('analyze-button');
+    const saveButton = document.getElementById('save-button');
     
     if (!text) {
         alert('الرجاء إدخال نص القضية');
@@ -12,6 +13,7 @@ async function analyzeText() {
     try {
         // تعطيل زر التحليل وإظهار مؤشر التحميل
         analysisButton.disabled = true;
+        saveButton.style.display = 'none';
         resultDiv.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">جاري التحليل...</span></div>';
 
         // إرسال طلب التحليل
@@ -20,8 +22,11 @@ async function analyzeText() {
         });
 
         // معالجة النتيجة
-        if (response.data.success) {
+        if (response.data.status === 'success') {
             let results = response.data.results;
+            // تخزين النتائج عالمياً للاستخدام في الحفظ
+            window.analysisResults = results;
+            
             let htmlContent = '<div class="analysis-results">';
             
             // عرض نتائج كل مرحلة
@@ -39,6 +44,9 @@ async function analyzeText() {
             
             htmlContent += '</div>';
             resultDiv.innerHTML = htmlContent;
+            
+            // إظهار زر الحفظ
+            saveButton.style.display = 'inline-block';
         } else {
             throw new Error(response.data.error || 'حدث خطأ أثناء التحليل');
         }
