@@ -1,281 +1,117 @@
-{% extends "base.html" %}
-
-{% block title %}الرئيسية{% endblock %}
-
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-10">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">تحليل النص القانوني</h4>
-            </div>
-            <div class="card-body">
-                <form id="analysisForm" class="needs-validation" novalidate>
-                    <div class="mb-3">
-                        <label for="text" class="form-label">النص القانوني</label>
-                        <textarea class="form-control" id="text" name="text" rows="6" required></textarea>
-                        <div class="invalid-feedback">
-                            يرجى إدخال النص القانوني
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="stage" class="form-label">نطاق التحليل</label>
-                            <select class="form-select" id="stage" name="stage" required>
-                                <option value="1">المرحلة الأولى فقط</option>
-                                <option value="1-3">المراحل 1-3</option>
-                                <option value="1-6">المراحل 1-6</option>
-                                <option value="1-9">المراحل 1-9</option>
-                                <option value="1-12" selected>جميع المراحل (1-12)</option>
-                            </select>
-                            <div class="invalid-feedback">
-                                يرجى اختيار نطاق التحليل
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary" id="analyzeBtn">
-                            <i class="bi bi-search me-2"></i>
-                            تحليل النص
-                        </button>
-                    </div>
-                </form>
-
-                <div id="resultSection" class="mt-4 d-none">
-                    <hr>
-                    <h5 class="text-primary mb-3">نتائج التحليل</h5>
-                    <div class="accordion" id="analysisResults">
-                        <!-- سيتم إضافة النتائج هنا -->
-                    </div>
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام التحليل القانوني</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .stage-card {
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: white;
+        }
+        .stage-title {
+            color: #0d6efd;
+            margin-bottom: 10px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+        }
+        .error {
+            color: red;
+            padding: 10px;
+            background-color: #fff3f3;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">نظام التحليل القانوني</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="textInput" class="form-label">النص القانوني</label>
+                    <textarea class="form-control" id="textInput" rows="10" placeholder="أدخل النص القانوني هنا..."></textarea>
                 </div>
-
-                <div id="loadingSpinner" class="text-center mt-4 d-none">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">جاري التحليل...</span>
-                    </div>
-                    <p class="mt-2">جاري تحليل النص...</p>
-                    <div class="progress mt-2" style="height: 20px;">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                             role="progressbar" 
-                             id="analysisProgress"
-                             style="width: 0%">0%</div>
-                    </div>
+                <button class="btn btn-primary w-100" id="analyzeBtn">تحليل النص</button>
+            </div>
+            
+            <div class="col-md-6">
+                <div id="results">
+                    <!-- سيتم إضافة نتائج التحليل هنا -->
                 </div>
             </div>
         </div>
     </div>
-</div>
-{% endblock %}
 
-{% block scripts %}
-<script>
-const STAGE_NAMES = {
-    1: "التحليل الأولي",
-    2: "تحليل الوقائع والأحداث",
-    3: "التحليل القانوني الأساسي",
-    4: "تحليل الأدلة والمستندات",
-    5: "تحليل السوابق القضائية",
-    6: "تحليل الحجج القانونية",
-    7: "تحليل الدفوع القانونية",
-    8: "التحليل الإجرائي",
-    9: "صياغة الاستراتيجية القانونية",
-    10: "تحليل المخاطر والفرص",
-    11: "اقتراح الحلول والبدائل",
-    12: "الملخص النهائي"
-};
-
-const MODEL_NAMES = {
-    'gemini': 'Google Gemini',
-    'llama': 'Groq Llama'
-};
-
-const STAGE_MODELS = {
-    1: 'gemini',
-    2: 'gemini',
-    3: 'llama',
-    4: 'llama',
-    5: 'gemini',
-    6: 'llama',
-    7: 'llama',
-    8: 'llama',
-    9: 'llama',
-    10: 'gemini',
-    11: 'llama',
-    12: 'gemini'
-};
-
-function createStageElement(stage, result, isFirst = false) {
-    const modelType = STAGE_MODELS[stage];
-    const needsVerification = [1, 3, 5, 8].includes(stage);
-    
-    let resultHtml = '';
-    
-    if (typeof result === 'object' && result !== null) {
-        // تنسيق النتائج المتحقق منها
-        if (result.analysis) {
-            resultHtml = `
-                <div class="analysis-section">
-                    <h6 class="text-primary">التحليل الأولي:</h6>
-                    <div class="mb-3">${result.analysis.replace(/\n/g, '<br>')}</div>
-                </div>`;
-
-            if (result.verification) {
-                resultHtml += `
-                    <div class="verification-section">
-                        <h6 class="text-success">نتائج التحقق:</h6>
-                        <div class="mb-3">${result.verification.replace(/\n/g, '<br>')}</div>
-                    </div>`;
-            }
-
-            if (result.sources) {
-                resultHtml += `
-                    <div class="sources-section">
-                        <h6 class="text-info">المصادر والمراجع:</h6>
-                        <div class="mb-3">${result.sources.replace(/\n/g, '<br>')}</div>
-                    </div>`;
-            }
-
-            if (result.verification_date) {
-                const date = new Date(result.verification_date);
-                resultHtml += `
-                    <div class="verification-date">
-                        <small class="text-muted">
-                            تاريخ التحقق: ${date.toLocaleString('ar-EG')}
-                        </small>
-                    </div>`;
-            }
-        } else if (result.verification_error) {
-            resultHtml = `
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    ${result.verification_error}
-                </div>
-                <div class="analysis-section">
-                    <h6>التحليل الأولي:</h6>
-                    <div>${result.analysis.replace(/\n/g, '<br>')}</div>
-                </div>`;
-        }
-    } else {
-        // النتائج العادية
-        resultHtml = result.replace(/\n/g, '<br>');
-    }
-    
-    return `
-        <div class="accordion-item" id="stage-item-${stage}">
-            <h2 class="accordion-header">
-                <button class="accordion-button ${!isFirst ? 'collapsed' : ''}" 
-                        type="button" 
-                        data-bs-toggle="collapse" 
-                        data-bs-target="#stage${stage}">
-                    المرحلة ${stage}: ${STAGE_NAMES[stage]}
-                    <span class="badge bg-info ms-2">${MODEL_NAMES[modelType]}</span>
-                    ${needsVerification ? '<span class="badge bg-success ms-2">تم التحقق من المعلومات</span>' : ''}
-                </button>
-            </h2>
-            <div id="stage${stage}" 
-                 class="accordion-collapse collapse ${isFirst ? 'show' : ''}"
-                 data-bs-parent="#analysisResults">
-                <div class="accordion-body">
-                    ${resultHtml}
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function updateProgressBar(current, total) {
-    const progressBar = document.getElementById('analysisProgress');
-    const percentage = Math.round((current / total) * 100);
-    progressBar.style.width = `${percentage}%`;
-    progressBar.textContent = `${percentage}%`;
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('analysisForm');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    const resultSection = document.getElementById('resultSection');
-    const analysisResults = document.getElementById('analysisResults');
-    const progressBar = document.getElementById('analysisProgress');
-
-    async function processStages(startStage, endStage, text) {
-        const totalStages = endStage - startStage + 1;
-        let currentStage = 0;
-
-        for (let stage = startStage; stage <= endStage; stage++) {
-            try {
-                // إرسال طلب لمرحلة واحدة
-                const response = await axios.post('/api/analyze', {
-                    text: text,
-                    stage: stage,
-                    end_stage: stage
-                });
-
-                if (response.data.status === 'success' && response.data.results && response.data.results[stage]) {
-                    // إضافة نتيجة المرحلة
-                    const result = response.data.results[stage];
-                    const isFirst = stage === startStage;
-                    
-                    // إذا كانت أول مرحلة، نظهر قسم النتائج
-                    if (isFirst) {
-                        resultSection.classList.remove('d-none');
-                    }
-
-                    // إضافة عنصر المرحلة
-                    const stageElement = createStageElement(stage, result, isFirst);
-                    analysisResults.insertAdjacentHTML('beforeend', stageElement);
-
-                    // تحديث شريط التقدم
-                    currentStage++;
-                    updateProgressBar(currentStage, totalStages);
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const textInput = document.getElementById('textInput');
+            const resultsDiv = document.getElementById('results');
+            
+            analyzeBtn.addEventListener('click', async function() {
+                const text = textInput.value.trim();
+                if (!text) {
+                    alert('الرجاء إدخال نص للتحليل');
+                    return;
                 }
-            } catch (error) {
-                console.error(`Error in stage ${stage}:`, error);
-                throw new Error(`خطأ في المرحلة ${stage}: ${error.response?.data?.message || error.message}`);
-            }
-        }
-    }
-
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        if (!form.checkValidity()) {
-            e.stopPropagation();
-            form.classList.add('was-validated');
-            return;
-        }
-
-        // تحديد نطاق المراحل
-        const stageRange = document.getElementById('stage').value;
-        let [startStage, endStage] = stageRange.split('-').map(Number);
-        if (!endStage) endStage = startStage;
-
-        try {
-            // تهيئة واجهة المستخدم
-            analyzeBtn.disabled = true;
-            loadingSpinner.classList.remove('d-none');
-            resultSection.classList.add('d-none');
-            analysisResults.innerHTML = '';
-            progressBar.style.width = '0%';
-            progressBar.textContent = '0%';
-
-            // معالجة المراحل
-            await processStages(
-                startStage, 
-                endStage, 
-                document.getElementById('text').value
-            );
-
-        } catch (error) {
-            console.error('Error:', error);
-            alert('حدث خطأ أثناء التحليل: ' + error.message);
-        } finally {
-            analyzeBtn.disabled = false;
-            loadingSpinner.classList.add('d-none');
-        }
-    });
-});
-</script>
-{% endblock %} 
+                
+                // إظهار مؤشر التحميل
+                resultsDiv.innerHTML = '<div class="loading">جاري تحليل النص...</div>';
+                
+                try {
+                    const response = await fetch('/analyze', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text: text })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // عرض النتائج
+                    resultsDiv.innerHTML = '';
+                    data.results.forEach(result => {
+                        const stageDiv = document.createElement('div');
+                        stageDiv.className = 'stage-card';
+                        stageDiv.innerHTML = `
+                            <h4 class="stage-title">${result.stage_name}</h4>
+                            ${result.error ? 
+                                `<div class="error">${result.error}</div>` : 
+                                `<div>${result.analysis}</div>
+                                 <div class="mt-2 text-muted">درجة الثقة: ${result.confidence}</div>`
+                            }
+                        `;
+                        resultsDiv.appendChild(stageDiv);
+                    });
+                    
+                } catch (error) {
+                    resultsDiv.innerHTML = `<div class="error">حدث خطأ: ${error.message}</div>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

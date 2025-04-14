@@ -7,6 +7,12 @@ from utils.cache import AnalysisCache
 from utils.documentation import DocumentationManager
 from utils.metrics import PerformanceTracker
 from utils.translation import LegalTranslator
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+
+# تحميل متغيرات البيئة
+load_dotenv()
 
 # Create main blueprint
 main_bp = Blueprint('main', __name__)
@@ -22,8 +28,11 @@ doc_manager = DocumentationManager()
 performance_tracker = PerformanceTracker(Session())
 translator = LegalTranslator()
 
-# المتغيرات العامة
-STAGE_NAMES = {
+# تهيئة نموذج Gemini
+genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
+
+# تعريف المراحل
+STAGES = {
     1: "التحليل الأولي",
     2: "تحليل الوقائع والأحداث",
     3: "التحليل القانوني الأساسي",
@@ -39,8 +48,7 @@ STAGE_NAMES = {
 }
 
 MODEL_NAMES = {
-    'gemini': 'Google Gemini',
-    'llama': 'Groq Llama'
+    'gemini': 'Google Gemini'
 }
 
 @main_bp.route('/')
@@ -78,7 +86,7 @@ def view_case(case_id):
     
     return render_template('case_details.html',
                          case=case,
-                         stage_names=STAGE_NAMES,
+                         stage_names=STAGES,
                          model_names=MODEL_NAMES,
                          **stats)
 
@@ -107,7 +115,7 @@ def metrics():
     confidence_data = []
     time_data = []
     
-    for stage_num, stage_name in STAGE_NAMES.items():
+    for stage_num, stage_name in STAGES.items():
         metrics = performance_tracker.get_metrics(metric_name='confidence_score', stage=stage_num)
         avg_confidence = sum(m.metric_value for m in metrics) / len(metrics) if metrics else 0.0
         
@@ -195,8 +203,7 @@ def settings():
     ]
     
     analysis_models = [
-        {'code': 'gemini', 'name': 'Google Gemini'},
-        {'code': 'llama', 'name': 'Groq Llama'}
+        {'code': 'gemini', 'name': 'Google Gemini'}
     ]
     
     return render_template('settings.html',
@@ -241,6 +248,107 @@ def clear_cache():
     """مسح التخزين المؤقت"""
     cache.clear_all_cache()
     return jsonify({'success': True})
+
+@main_bp.route('/analyze', methods=['POST'])
+def analyze():
+    try:
+        text = request.json.get('text')
+        if not text:
+            return jsonify({'error': 'النص مطلوب'}), 400
+
+        results = []
+        model = genai.GenerativeModel('gemini-pro')
+
+        for stage_num, stage_name in STAGES.items():
+            try:
+                prompt = f"""
+                قم بتحليل النص التالي في المرحلة {stage_num} ({stage_name}):
+
+                {text}
+
+                ركز فقط على هذه المرحلة وقدم تحليلاً مفصلاً.
+                """
+                
+                response = model.generate_content(prompt)
+                
+                results.append({
+                    'stage': stage_num,
+                    'stage_name': stage_name,
+                    'analysis': response.text,
+                    'confidence': 0.9
+                })
+                
+            except Exception as e:
+                results.append({
+                    'stage': stage_num,
+                    'stage_name': stage_name,
+                    'error': f'خطأ في التحليل: {str(e)}'
+                })
+
+        return jsonify({'results': results})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main_bp.route('/api/collect-results', methods=['POST'])
+def collect_results():
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({'error': 'النص مطلوب'}), 400
+        
+        all_results = []
+        
+        # جمع نتائج جميع المراحل
+        for stage in range(1, len(STAGES) + 1):
+            # التحقق من وجود نتيجة مخزنة مؤقتاً
+            cached_result = cache.get_cached_result(text, stage)
+            if cached_result:
+                all_results.append(cached_result)
+            else:
+                # إذا لم تكن النتيجة مخزنة، قم بتحليل المرحلة
+                result = {
+                    'stage': stage,
+                    'stage_name': STAGES[stage],
+                    'analysis': None,
+                    'sources': [],
+                    'confidence': 0.0
+                }
+                
+                try:
+                    model = genai.GenerativeModel('gemini-pro')
+                    prompt = f"""
+                    قم بتحليل النص التالي في المرحلة {stage} ({STAGES[stage]}):
+
+                    {text}
+
+                    ركز فقط على هذه المرحلة وقدم تحليلاً مفصلاً.
+                    """
+                    
+                    response = model.generate_content(prompt)
+                    result['analysis'] = response.text
+                    result['confidence'] = 0.9
+                    
+                    # تخزين النتيجة في الذاكرة المؤقتة
+                    cache.cache_result(text, stage, result)
+                    all_results.append(result)
+                    
+                except Exception as e:
+                    error_msg = f"خطأ في استخدام نموذج Gemini: {str(e)}"
+                    print(f"Error in stage {stage}: {error_msg}")
+                    result['error'] = error_msg
+                    all_results.append(result)
+        
+        return jsonify({
+            'success': True,
+            'results': all_results
+        })
+        
+    except Exception as e:
+        print(f"Error in collect-results endpoint: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 def create_app():
     app = Flask(__name__)

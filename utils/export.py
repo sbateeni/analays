@@ -8,7 +8,6 @@ from docx import Document
 from docx.shared import Inches
 import pandas as pd
 import matplotlib.pyplot as plt
-import pdfkit
 from io import BytesIO
 
 class AnalysisExporter:

@@ -21,22 +21,31 @@ else:
         # تكوين Gemini
         genai.configure(api_key=gemini_api_key)
         
-        # طباعة النماذج المتاحة
-        print("Available models:", genai.list_models())
+        # البحث عن نموذج Gemini 2.0 Flash
+        model_name = 'models/gemini-2.0-flash-001'
+        available_models = list(genai.list_models())
+        print("Available models:", [model.name for model in available_models])
         
-        # محاولة تهيئة النموذج
-        try:
-            model = genai.GenerativeModel('gemini-pro')
-            # اختبار النموذج
-            response = model.generate_content("Test connection")
-            if response and response.text:
-                models['gemini'] = model
-                print("Gemini model initialized and tested successfully")
-            else:
-                raise Exception("Model response was empty")
-        except Exception as model_error:
-            print(f"Error testing model: {str(model_error)}")
-            raise
+        model_found = any(model.name == model_name for model in available_models)
+        
+        if not model_found:
+            print(f"Model {model_name} not found in available models")
+            # محاولة استخدام نموذج بديل
+            model_name = 'gemini-pro'
+            model_found = any(model.name == model_name for model in available_models)
+            if not model_found:
+                raise Exception(f"النموذج {model_name} غير متوفر")
+            
+        print(f"Model {model_name} found, initializing...")
+        model = genai.GenerativeModel(model_name)
+        
+        # اختبار النموذج
+        response = model.generate_content("Test connection")
+        if response and response.text:
+            models['gemini'] = model
+            print(f"Gemini model {model_name} initialized and tested successfully")
+        else:
+            raise Exception("Model response was empty")
             
     except Exception as e:
         error_msg = str(e).lower()
